@@ -42,14 +42,29 @@ MsgBox App.FullName
 MsgBox App.DirPath
 ```
 
-## MsgLabel()
+## App.MsgLabel()
 アクティブフォームのLabelにメッセージを表示する共通メソッドです。MsgBoxのポップアップが煩わしいときに利用してください。
 アクティブフォームに指定のコントロー名のLabelが存在しない場合はMsgBoxを表示します。
 ```
-Call MsgLabel("こんにちは！")
+Call App.MsgLabel("こんにちは！")
 ```
-コントロール名をを変更するときは下記の定義を変更してください。
+コントロール名を変更するときは下記の定義を変更してください。
 ```
 Private Const MSG_LBL_NAME = "lbl_msg"
 ```
 
+## App.IsExistsTable() / App.IsExistsQuery()
+MSysObjectsを参照してテーブル、クエリが存在しているかチェックします。
+```
+If App.IsExistsTable("tbl_user") Then
+    MsgBox "tbl_userテーブルは存在します"
+Else
+    MsgBox "tbl_userテーブルは存在しません"
+End If
+
+If App.IsExistsQuery("tbl_user") Then
+    MsgBox "tbl_userクエリは存在します"
+Else
+    MsgBox "tbl_userクエリは存在しません"
+End If
+```
