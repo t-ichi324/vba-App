@@ -36,7 +36,7 @@ Private m_sysVer As String
 Public Function INIT_APP_TBL()
 On Error GoTo ex
     If Not IsExistsTable(TBL_APP_DATA) Then
-        Call CurrentDb.Execute("CREATE TABLE [" & TBL_APP_DATA & "] ([Key] TEXT(50) CONSTRAINT PRIMARYKEY PRIMARY KEY, [Val] CHAR(255));")
+        Call CurrentDb.Execute("CREATE TABLE [" & TBL_APP_DATA & "] ([Key] TEXT(50) CONSTRAINT PRIMARYKEY PRIMARY KEY, [Val] TEXT(255));")
         Call CurrentDb.Execute("INSERT INTO [" & TBL_APP_DATA & "] VALUES('env', 'test');")
         Call CurrentDb.Execute("INSERT INTO [" & TBL_APP_DATA & "] VALUES('mode', 'test');")
         Call CurrentDb.Execute("INSERT INTO [" & TBL_APP_DATA & "] VALUES('sys_title', 'System');")
@@ -119,13 +119,13 @@ End Property
 
 '//////////////////////////////////////
 '--- Accessのファイル名を取得
-Public Property Get FileName()
-    FileName = Application.CurrentProject.name
+Public Property Get fileName()
+    fileName = Application.CurrentProject.name
 End Property
 
 '--- Accessのファイルのパスを取得
-Public Property Get FilePath()
-    FilePath = Application.CurrentProject.FullName
+Public Property Get filePath()
+    filePath = Application.CurrentProject.FullName
 End Property
 
 '--- Accessのディレクトリのパスを取得
@@ -134,7 +134,10 @@ Public Property Get DirPath()
 End Property
 
 '--- Accessの終了
-Public Sub SystemQuit()
+Public Sub SystemQuit(Optional ByVal autoComppact As Boolean = False)
+    If autoComppact Then
+        SetOption "Auto Compact", True
+    End If
     Call DoCmd.quit(acQuitSaveAll)
 End Sub
 
@@ -155,10 +158,103 @@ On Error GoTo ex:
     End If
 ex:
     'コントロールが所得できない場合やエラー時
-    If msg <> "" Then: Call MsgBox(msg, vbOKOnly)
+    If msg <> "" Then: Call MsgBox(msg, vbOKOnly, App.SystemTitle)
     
 End Sub
+'--- True OR False
+Public Function ConfirmBox(ByVal msg As String) As Boolean
+    If MsgBox(msg, vbQuestion + vbOKCancel, App.SystemTitle) = vbOK Then
+        ConfirmBox = True
+        Exit Function
+    End If
+    ConfirmBox = False
+End Function
 
+'//////////////////////////////////////
+
+'--- ファイル選択ダイアログ
+'
+' フィルタの指定例
+' fillter_cs_pipe := "Excel, *.xls; *.xlsx; *.xlsm | すべてのファイル, *.*"
+'
+Public Function FileOpenDialog(Optional ByVal initial_path As String = "", Optional ByVal fillter_cs_pipe As String) As String
+On Error GoTo ex:
+    FileOpenDialog = ""
+    
+    Dim ret As String
+    Dim d As FileDialog
+    Set d = Application.FileDialog(3) 'msoFileDialogFilePicker = 3
+    
+    'フィルタ作成
+    If fillter_cs_pipe <> "" Then
+        fillter_cs_pipe = Replace(fillter_cs_pipe, "｜", "|")
+        d.Filters.Clear
+        Dim line As Variant
+        For Each line In Split(fillter_cs_pipe, "|")
+            If InStr(line, ",") Then
+                Dim sp() As String
+                sp = Split(line, ",")
+                Call d.Filters.Add(Trim(sp(0)), Trim(sp(1)))
+            End If
+        Next
+    End If
+    
+    d.AllowMultiSelect = False
+    If initial_path <> "" Then: d.InitialFileName = initial_path
+    
+    If d.Show Then
+        If d.SelectedItems.Count > 0 Then
+            ret = d.SelectedItems(1)
+        End If
+    End If
+    
+    FileOpenDialog = ret
+ex:
+End Function
+
+'--- ファイル保存ダイアログ
+'
+Public Function FileSaveDialog(Optional ByVal initial_path As String = "") As String
+On Error GoTo ex:
+    FileSaveDialog = ""
+    
+    Dim ret As String
+    Dim d As FileDialog
+    Set d = Application.FileDialog(2) 'msoFileDialogSaveAs  = 2
+    
+    If initial_path <> "" Then: d.InitialFileName = initial_path
+    
+    If d.Show Then
+        If d.SelectedItems.Count > 0 Then
+            ret = d.SelectedItems(1)
+        End If
+    End If
+    
+    
+    FileSaveDialog = ret
+ex:
+End Function
+
+'--- フォルダ選択ダイアログ
+Public Function DialogDialog(Optional ByVal initial_path As String = "") As String
+On Error GoTo ex:
+    DialogDialog = ""
+    
+    Dim ret As String
+    Dim d As FileDialog
+    Set d = Application.FileDialog(4) 'msoFileDialogFolderPicker = 4
+    
+    If initial_path <> "" Then: d.InitialFileName = initial_path
+    
+    If d.Show Then
+        If d.SelectedItems.Count > 0 Then
+            ret = d.SelectedItems(1)
+        End If
+    End If
+    
+    DialogDialog = ret
+ex:
+End Function
 
 '//////////////////////////////////////
 '--- テーブル存在チェック
@@ -242,7 +338,7 @@ Public Function LogError(ByVal message As String, Optional ByVal alert As Boolea
 End Function
 Public Function LogException(Optional ByVal alert As Boolean = True, Optional ByVal callModuleName As String = "---")
     Dim msg  As String
-    msg = err.Description
+    msg = Err.Description
     Call WriteLog("error", LogText(msg, callModuleName))
     If alert Then
         Call MsgBox(msg, vbOKOnly + vbCritical, "ERROR")
@@ -260,7 +356,7 @@ Private Function LogText(ByVal message As String, ByVal moduleName As String) As
     txt = txt & "========================="
     LogText = txt
 End Function
-Private Sub WriteLog(ByVal fName As String, ByVal Log As String)
+Private Sub WriteLog(ByVal fName As String, ByVal log As String)
 On Error GoTo ex:
     Dim saveTo As String
     saveTo = Application.CurrentProject.FullName & "." & fName & ".log"
@@ -268,7 +364,7 @@ On Error GoTo ex:
     Dim f As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
     Set f = fso.OpenTextFile(saveTo, 8, True)
-    Call f.WriteLine(Log & vbCrLf)
+    Call f.WriteLine(log & vbCrLf)
 ex:
     If Not fso Is Nothing Then: Set fso = Nothing
     If Not f Is Nothing Then: f.Close: Set f = Nothing
