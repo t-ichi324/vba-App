@@ -141,7 +141,6 @@ Public Sub SystemQuit(Optional ByVal autoComppact As Boolean = False)
     Call DoCmd.quit(acQuitSaveAll)
 End Sub
 
-
 '//////////////////////////////////////
 '--- 共通メッセージラベル
 Public Sub MsgLabel(ByVal msg As String)
@@ -182,7 +181,7 @@ On Error GoTo ex:
     FileOpenDialog = ""
     
     Dim ret As String
-    Dim d As FileDialog
+    Dim d As Object
     Set d = Application.FileDialog(3) 'msoFileDialogFilePicker = 3
     
     'フィルタ作成
@@ -219,7 +218,7 @@ On Error GoTo ex:
     FileSaveDialog = ""
     
     Dim ret As String
-    Dim d As FileDialog
+    Dim d As Object
     Set d = Application.FileDialog(2) 'msoFileDialogSaveAs  = 2
     
     If initial_path <> "" Then: d.InitialFileName = initial_path
@@ -241,7 +240,7 @@ On Error GoTo ex:
     DialogDialog = ""
     
     Dim ret As String
-    Dim d As FileDialog
+    Dim d As Object
     Set d = Application.FileDialog(4) 'msoFileDialogFolderPicker = 4
     
     If initial_path <> "" Then: d.InitialFileName = initial_path
